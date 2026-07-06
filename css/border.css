@@ -1,0 +1,136 @@
+/* css/border.css — Thick Mithila-style decorative border on all four sides */
+
+/* ── Fixed border frame overlay ─────────────────────────────────────────────
+   Uses pointer-events: none so it never blocks interaction.
+   Built from four absolutely-positioned sides, each with an SVG pattern.
+──────────────────────────────────────────────────────────────────────────── */
+
+.mithila-border-frame {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9990;
+}
+
+/* ── Four sides ─────────────────────────────────────────────────────────────
+   Each side is a strip with:
+   1. Outer black line (2px)
+   2. Coloured patterned fill
+   3. Inner black line (2px)
+──────────────────────────────────────────────────────────────────────────── */
+
+.border-side {
+    position: absolute;
+    background-color: var(--m-red);
+}
+
+/* Top */
+.border-top {
+    top: 0; left: 0; right: 0;
+    height: var(--border-w);
+    background:
+        linear-gradient(180deg,
+            var(--m-black)  0px,    var(--m-black)  2px,
+            transparent     2px,    transparent     4px,
+            var(--m-red)    4px,    var(--m-red)    calc(var(--border-w) - 6px),
+            transparent     calc(var(--border-w) - 6px), transparent calc(var(--border-w) - 4px),
+            var(--m-black)  calc(var(--border-w) - 4px), var(--m-black) var(--border-w)
+        ),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38'%3E%3C!-- Fish --%3E%3Cellipse cx='19' cy='19' rx='9' ry='5' fill='none' stroke='%23FDF5E6' stroke-width='1.2'/%3E%3Cpath d='M28 19 L34 14 L34 24 Z' fill='%23FDF5E6' opacity='0.8'/%3E%3Ccircle cx='13' cy='18' r='1.5' fill='%23FDF5E6'/%3E%3C!-- Lotus petal --%3E%3Cpath d='M5 5 Q10 0 15 5 Q10 10 5 5Z' fill='%23F0A500' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: auto, 38px 38px;
+}
+
+/* Bottom */
+.border-bottom {
+    bottom: 0; left: 0; right: 0;
+    height: var(--border-w);
+    background:
+        linear-gradient(0deg,
+            var(--m-black)  0px,    var(--m-black)  2px,
+            transparent     2px,    transparent     4px,
+            var(--m-red)    4px,    var(--m-red)    calc(var(--border-w) - 6px),
+            transparent     calc(var(--border-w) - 6px), transparent calc(var(--border-w) - 4px),
+            var(--m-black)  calc(var(--border-w) - 4px), var(--m-black) var(--border-w)
+        ),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38'%3E%3Cellipse cx='19' cy='19' rx='9' ry='5' fill='none' stroke='%23FDF5E6' stroke-width='1.2'/%3E%3Cpath d='M28 19 L34 14 L34 24 Z' fill='%23FDF5E6' opacity='0.8'/%3E%3Ccircle cx='13' cy='18' r='1.5' fill='%23FDF5E6'/%3E%3Cpath d='M5 5 Q10 0 15 5 Q10 10 5 5Z' fill='%23F0A500' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: auto, 38px 38px;
+}
+
+/* Left */
+.border-left {
+    top: 0; left: 0; bottom: 0;
+    width: var(--border-w);
+    background:
+        linear-gradient(90deg,
+            var(--m-black)  0px,    var(--m-black)  2px,
+            transparent     2px,    transparent     4px,
+            var(--m-green)  4px,    var(--m-green)  calc(var(--border-w) - 6px),
+            transparent     calc(var(--border-w) - 6px), transparent calc(var(--border-w) - 4px),
+            var(--m-black)  calc(var(--border-w) - 4px), var(--m-black) var(--border-w)
+        ),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38'%3E%3C!-- Peacock feather eye --%3E%3Ccircle cx='19' cy='19' r='7' fill='none' stroke='%23FDF5E6' stroke-width='1'/%3E%3Ccircle cx='19' cy='19' r='4' fill='%23F0A500' opacity='0.6'/%3E%3Ccircle cx='19' cy='19' r='2' fill='%231565C0' opacity='0.7'/%3E%3C!-- Diamond --%3E%3Cpath d='M19 2 L28 19 L19 36 L10 19 Z' fill='none' stroke='%23FDF5E6' stroke-width='0.8' opacity='0.4'/%3E%3C/svg%3E");
+    background-size: auto, 38px 38px;
+}
+
+/* Right */
+.border-right {
+    top: 0; right: 0; bottom: 0;
+    width: var(--border-w);
+    background:
+        linear-gradient(270deg,
+            var(--m-black)  0px,    var(--m-black)  2px,
+            transparent     2px,    transparent     4px,
+            var(--m-gold)   4px,    var(--m-gold)   calc(var(--border-w) - 6px),
+            transparent     calc(var(--border-w) - 6px), transparent calc(var(--border-w) - 4px),
+            var(--m-black)  calc(var(--border-w) - 4px), var(--m-black) var(--border-w)
+        ),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38'%3E%3Ccircle cx='19' cy='19' r='7' fill='none' stroke='%23FDF5E6' stroke-width='1'/%3E%3Ccircle cx='19' cy='19' r='4' fill='%23F0A500' opacity='0.6'/%3E%3Ccircle cx='19' cy='19' r='2' fill='%231565C0' opacity='0.7'/%3E%3Cpath d='M19 2 L28 19 L19 36 L10 19 Z' fill='none' stroke='%23FDF5E6' stroke-width='0.8' opacity='0.4'/%3E%3C/svg%3E");
+    background-size: auto, 38px 38px;
+}
+
+/* ── Corner blocks ──────────────────────────────────────────────────────────
+   Square corner pieces that overlap both sides.
+   Each has a unique decorative motif (lotus, sun, peacock, fish).
+──────────────────────────────────────────────────────────────────────────── */
+
+.border-corner {
+    position: absolute;
+    width: var(--border-w);
+    height: var(--border-w);
+    background: var(--m-deep-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.border-corner-tl { top: 0; left: 0; border-bottom-right-radius: 4px; }
+.border-corner-tr { top: 0; right: 0; border-bottom-left-radius: 4px; }
+.border-corner-bl { bottom: 0; left: 0; border-top-right-radius: 4px; }
+.border-corner-br { bottom: 0; right: 0; border-top-left-radius: 4px; }
+
+/* Corner SVG motifs */
+.border-corner svg {
+    width: 26px;
+    height: 26px;
+}
+
+/* ── Inner decorative stripe ────────────────────────────────────────────────
+   A subtle inner outline 2px in from the border on all sides
+──────────────────────────────────────────────────────────────────────────── */
+.mithila-border-frame::after {
+    content: '';
+    position: absolute;
+    inset: calc(var(--border-w) + 4px);
+    border: 1.5px solid rgba(192, 57, 43, 0.18);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* ── Border animation — subtle shimmer ──────────────────────────────────────*/
+@keyframes borderShimmer {
+    0%   { opacity: 0.92; }
+    50%  { opacity: 1;    }
+    100% { opacity: 0.92; }
+}
+.border-side { animation: borderShimmer 4s ease-in-out infinite; }

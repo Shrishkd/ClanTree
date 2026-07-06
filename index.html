@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Clan Family Tree — An interactive Mithila art themed family tree builder with permanent storage, relationship finder, and rich member profiles.">
+    <title>वंश वृक्ष — Clan Family Tree</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/border.css">
+    <link rel="stylesheet" href="css/tree.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/modals.css">
+
+    <style>
+        /* Inline critical overrides */
+        html, body { height: 100%; }
+        #app-section { height: calc(100vh - 0px); }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MITHILA BORDER FRAME (fixed overlay, pointer-events: none)
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="mithila-border-frame" aria-hidden="true">
+    <!-- Four sides -->
+    <div class="border-side border-top"></div>
+    <div class="border-side border-bottom"></div>
+    <div class="border-side border-left"></div>
+    <div class="border-side border-right"></div>
+
+    <!-- Corners with lotus motif SVGs -->
+    <div class="border-corner border-corner-tl">
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 2 Q18 7 13 12 Q8 7 13 2Z" fill="#FDF5E6" opacity="0.9"/>
+            <path d="M2 13 Q7 8 12 13 Q7 18 2 13Z" fill="#F0A500" opacity="0.8"/>
+            <circle cx="13" cy="13" r="3" fill="#FDF5E6" opacity="0.7"/>
+        </svg>
+    </div>
+    <div class="border-corner border-corner-tr">
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 2 Q18 7 13 12 Q8 7 13 2Z" fill="#FDF5E6" opacity="0.9"/>
+            <path d="M24 13 Q19 8 14 13 Q19 18 24 13Z" fill="#F0A500" opacity="0.8"/>
+            <circle cx="13" cy="13" r="3" fill="#FDF5E6" opacity="0.7"/>
+        </svg>
+    </div>
+    <div class="border-corner border-corner-bl">
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 24 Q8 19 13 14 Q18 19 13 24Z" fill="#FDF5E6" opacity="0.9"/>
+            <path d="M2 13 Q7 8 12 13 Q7 18 2 13Z" fill="#F0A500" opacity="0.8"/>
+            <circle cx="13" cy="13" r="3" fill="#FDF5E6" opacity="0.7"/>
+        </svg>
+    </div>
+    <div class="border-corner border-corner-br">
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 24 Q8 19 13 14 Q18 19 13 24Z" fill="#FDF5E6" opacity="0.9"/>
+            <path d="M24 13 Q19 8 14 13 Q19 18 24 13Z" fill="#F0A500" opacity="0.8"/>
+            <circle cx="13" cy="13" r="3" fill="#FDF5E6" opacity="0.7"/>
+        </svg>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     HERO SECTION
+════════════════════════════════════════════════════════════════════════════ -->
+<section id="hero" role="banner">
+
+    <!-- Decorative background SVG motifs -->
+    <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.06;" aria-hidden="true">
+        <!-- Sun -->
+        <circle cx="10%" cy="15%" r="40" fill="none" stroke="#C0392B" stroke-width="2"/>
+        <circle cx="10%" cy="15%" r="30" fill="none" stroke="#C0392B" stroke-width="1"/>
+        <!-- Moon -->
+        <path d="M 90% 10% a 20 20 0 1 1 0 40 a 15 15 0 1 0 0 -40" fill="#F0A500" transform="translate(-60,0)"/>
+        <!-- Large lotus bottom -->
+        <ellipse cx="50%" cy="95%" rx="200" ry="60" fill="none" stroke="#2E7D32" stroke-width="1.5"/>
+        <ellipse cx="50%" cy="95%" rx="140" ry="40" fill="none" stroke="#C0392B" stroke-width="1"/>
+        <!-- Peacock feathers left -->
+        <circle cx="8%" cy="55%" r="25" fill="none" stroke="#1565C0" stroke-width="1.5"/>
+        <circle cx="8%" cy="55%" r="15" fill="none" stroke="#E65100" stroke-width="1"/>
+        <circle cx="8%" cy="55%" r="6"  fill="#F0A500" opacity="0.3"/>
+        <!-- Peacock feathers right -->
+        <circle cx="92%" cy="55%" r="25" fill="none" stroke="#1565C0" stroke-width="1.5"/>
+        <circle cx="92%" cy="55%" r="15" fill="none" stroke="#E65100" stroke-width="1"/>
+        <circle cx="92%" cy="55%" r="6"  fill="#F0A500" opacity="0.3"/>
+    </svg>
+
+    <!-- Title -->
+    <h1 class="hero-title">वंश वृक्ष</h1>
+    <p class="hero-title-en">Clan Family Tree</p>
+
+    <!-- Hero Image -->
+    <div class="hero-image-container">
+        <!-- Lotus corner decorations -->
+        <svg class="lotus-corner tl" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M6 6 Q24 0 24 18 Q12 18 6 6Z" fill="#C0392B" opacity="0.7"/>
+            <path d="M6 6 Q0 24 18 24 Q18 12 6 6Z" fill="#F0A500" opacity="0.7"/>
+            <circle cx="18" cy="18" r="4" fill="#2E7D32" opacity="0.7"/>
+        </svg>
+        <svg class="lotus-corner tr" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M6 6 Q24 0 24 18 Q12 18 6 6Z" fill="#C0392B" opacity="0.7"/>
+            <path d="M6 6 Q0 24 18 24 Q18 12 6 6Z" fill="#F0A500" opacity="0.7"/>
+            <circle cx="18" cy="18" r="4" fill="#2E7D32" opacity="0.7"/>
+        </svg>
+        <svg class="lotus-corner bl" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M6 6 Q24 0 24 18 Q12 18 6 6Z" fill="#C0392B" opacity="0.7"/>
+            <path d="M6 6 Q0 24 18 24 Q18 12 6 6Z" fill="#F0A500" opacity="0.7"/>
+            <circle cx="18" cy="18" r="4" fill="#2E7D32" opacity="0.7"/>
+        </svg>
+        <svg class="lotus-corner br" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M6 6 Q24 0 24 18 Q12 18 6 6Z" fill="#C0392B" opacity="0.7"/>
+            <path d="M6 6 Q0 24 18 24 Q18 12 6 6Z" fill="#F0A500" opacity="0.7"/>
+            <circle cx="18" cy="18" r="4" fill="#2E7D32" opacity="0.7"/>
+        </svg>
+
+        <div class="hero-image-frame">
+            <img class="hero-kali"
+                 src="assets/kali_hero.png"
+                 alt="Maa Kali — Mithila Painting"
+                 loading="eager">
+        </div>
+    </div>
+
+    <!-- Subtitle -->
+    <p class="hero-subtitle">
+        Preserve your family's legacy with an interactive, beautifully crafted family tree
+        inspired by the ancient Mithila art of Bihar. Every family tells a story.
+    </p>
+
+    <!-- Divider -->
+    <div class="hero-divider" aria-hidden="true">
+        <div class="hero-divider-line"></div>
+        <span class="hero-divider-icon">🪷</span>
+        <div class="hero-divider-line"></div>
+    </div>
+
+    <!-- Feature pills -->
+    <div class="hero-features" role="list">
+        <span class="feature-pill" role="listitem">🌳 Interactive Tree</span>
+        <span class="feature-pill" role="listitem">🔍 Relationship Finder</span>
+        <span class="feature-pill" role="listitem">📷 Photo Upload</span>
+        <span class="feature-pill" role="listitem">♾️ Infinite Zoom</span>
+        <span class="feature-pill" role="listitem">💾 Persistent Storage</span>
+        <span class="feature-pill" role="listitem">🎨 Mithila Theme</span>
+    </div>
+
+    <!-- CTA -->
+    <br>
+    <button class="btn-hero" id="enter-tree-btn" aria-label="Enter the Family Tree">
+        🌺 &nbsp;Enter Family Tree
+    </button>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     APP SECTION — Tree canvas + toolbar
+════════════════════════════════════════════════════════════════════════════ -->
+<section id="app-section" aria-label="Family Tree Application">
+
+    <!-- ── Toolbar ─────────────────────────────────────────────────────── -->
+    <div id="toolbar" role="toolbar" aria-label="Family Tree Controls">
+
+        <!-- Logo -->
+        <span class="toolbar-title">🌺 वंश वृक्ष</span>
+        <div class="toolbar-sep" aria-hidden="true"></div>
+
+        <!-- Add root member -->
+        <div class="toolbar-group">
+            <button class="btn-toolbar primary" id="btn-add-root"
+                    title="Add the first member of your family tree"
+                    aria-label="Add Root Member">
+                ＋ Add Root Member
+            </button>
+        </div>
+
+        <div class="toolbar-sep" aria-hidden="true"></div>
+
+        <!-- Search -->
+        <div class="search-wrapper" role="search">
+            <div class="search-input-row">
+                <span class="search-icon" aria-hidden="true">🔍</span>
+                <input type="search"
+                       id="search-input"
+                       placeholder="Search members…"
+                       autocomplete="off"
+                       aria-label="Search family members"
+                       aria-haspopup="listbox"
+                       aria-controls="search-dropdown">
+            </div>
+            <div id="search-dropdown" role="listbox" aria-label="Search results"></div>
+        </div>
+
+        <div class="toolbar-sep" aria-hidden="true"></div>
+
+        <!-- Relationship finder -->
+        <div class="toolbar-group">
+            <button class="btn-toolbar secondary" id="btn-finder"
+                    aria-label="Open Relationship Finder">
+                🔗 Find Relation
+            </button>
+        </div>
+
+        <div class="toolbar-sep" aria-hidden="true"></div>
+
+        <!-- Zoom controls -->
+        <div class="toolbar-group" role="group" aria-label="Zoom controls">
+            <button class="btn-toolbar icon-only" id="btn-zoom-in"  title="Zoom In"       aria-label="Zoom In">＋</button>
+            <button class="btn-toolbar icon-only" id="btn-zoom-out" title="Zoom Out"      aria-label="Zoom Out">－</button>
+            <button class="btn-toolbar icon-only" id="btn-fit"      title="Fit to Screen" aria-label="Fit to Screen">⊞</button>
+            <button class="btn-toolbar icon-only" id="btn-reset"    title="Reset View"    aria-label="Reset View">⌂</button>
+        </div>
+
+        <!-- Legend -->
+        <div class="toolbar-sep" aria-hidden="true"></div>
+        <div class="toolbar-group" style="gap:8px;font-size:0.72rem;color:rgba(44,16,0,0.5);">
+            <span style="display:flex;align-items:center;gap:4px;">
+                <span style="width:20px;height:2px;background:#C0392B;display:inline-block;"></span> Parent–Child
+            </span>
+            <span style="display:flex;align-items:center;gap:4px;">
+                <span style="display:inline-flex;flex-direction:column;gap:2px;width:20px;">
+                    <span style="height:2px;background:#B91C1C;display:block;"></span>
+                    <span style="height:2px;background:#B91C1C;display:block;"></span>
+                </span> Spouse
+            </span>
+            <span style="display:flex;align-items:center;gap:4px;">
+                <span style="width:20px;height:2px;border-top:2px dashed #2E7D32;display:inline-block;"></span> Siblings
+            </span>
+            <span style="display:flex;align-items:center;gap:4px;">
+                <span style="width:20px;height:2px;border-top:2px dashed #C62828;display:inline-block;"></span> Step-Siblings
+            </span>
+            <span style="display:flex;align-items:center;gap:4px;">
+                <span style="width:20px;height:2px;border-top:2px dashed #D4860A;display:inline-block;"></span> Adopted
+            </span>
+        </div>
+    </div>
+
+    <!-- ── Tree Canvas ─────────────────────────────────────────────────── -->
+    <div id="tree-container" role="main" aria-label="Interactive Family Tree Canvas">
+        <svg id="tree-svg" aria-label="Family tree visualization"></svg>
+
+        <!-- HTML card overlay: cards render here as plain divs (NOT inside SVG).
+             This guarantees button clicks always fire — no D3 zoom interference. -->
+        <div id="cards-overlay" aria-label="Family member cards"></div>
+
+        <!-- Empty state -->
+        <div id="tree-empty" aria-live="polite">
+            <div class="empty-icon" aria-hidden="true">🌳</div>
+            <h2 class="empty-title">Your family tree awaits</h2>
+            <p class="empty-sub">Click "Add Root Member" in the toolbar to add the first ancestor and begin building your family tree.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL: Add / Edit Member
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="member-modal" class="modal-backdrop" role="dialog" aria-modal="true"
+     aria-labelledby="member-modal-title">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 class="modal-title" id="member-modal-title">Add Member</h2>
+            <button class="modal-close" id="btn-cancel-member" aria-label="Close">×</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="modal-tabs" role="tablist">
+            <button class="modal-tab active" role="tab" data-tab="tab-info"      aria-selected="true">👤 Info</button>
+            <button class="modal-tab"         role="tab" data-tab="tab-photo"     aria-selected="false">📷 Photo</button>
+            <button class="modal-tab"         role="tab" data-tab="tab-docs"      aria-selected="false">📄 Docs</button>
+            <button class="modal-tab"         role="tab" data-tab="tab-notes"     aria-selected="false">📝 Notes</button>
+        </div>
+
+        <form id="member-form" class="modal-body" novalidate>
+
+            <!-- Tab: Info -->
+            <div id="tab-info" class="modal-tab-content active" role="tabpanel">
+                <div class="form-group">
+                    <label class="form-label" for="member-name">Full Name <span style="color:var(--m-red)">*</span></label>
+                    <input type="text" id="member-name" name="name"
+                           class="form-input" placeholder="e.g. Ramesh Kumar Das"
+                           required autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <div class="radio-group" role="radiogroup">
+                        <label class="radio-label">
+                            <input type="radio" name="gender" value="male" checked> 👨 Male
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="gender" value="female"> 👩 Female
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="gender" value="other"> ⚧ Other
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="member-dob">Date of Birth</label>
+                    <input type="date" id="member-dob" name="dob" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="member-description">Short Description</label>
+                    <textarea id="member-description" name="description" class="form-textarea"
+                              placeholder="e.g. Village headman, born in Madhubani, loved farming…"
+                              rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="member-isAlive" name="isAlive" checked
+                               onchange="document.getElementById('dod-group').style.display=this.checked?'none':'block'">
+                        Currently Living
+                    </label>
+                </div>
+
+                <!-- Date of Death — shown only when "Currently Living" is unchecked -->
+                <div class="form-group" id="dod-group" style="display:none;">
+                    <label class="form-label" for="member-dod">
+                        ✝ Date of Death
+                    </label>
+                    <input type="date" id="member-dod" name="dod" class="form-input">
+                </div>
+
+            </div>
+
+            <!-- Tab: Photo -->
+            <div id="tab-photo" class="modal-tab-content" role="tabpanel">
+                <div class="form-group">
+                    <label class="form-label">Profile Photo</label>
+                    <div class="photo-upload-area"
+                         onclick="document.getElementById('photo-upload-input').click()"
+                         role="button" tabindex="0"
+                         aria-label="Click to upload profile photo"
+                         onkeydown="if(event.key==='Enter')this.click()">
+                        <div style="font-size:2.5rem;">📷</div>
+                        <div style="font-size:0.88rem;color:var(--m-deep-red);font-weight:600;margin-top:8px;">
+                            Click to upload photo
+                        </div>
+                        <div class="photo-upload-hint">
+                            JPG, PNG, or WebP &nbsp;·&nbsp; Max 2 MB
+                        </div>
+                    </div>
+                    <input type="file" id="photo-upload-input" accept="image/*"
+                           style="display:none" aria-label="Upload photo file">
+                </div>
+
+                <div id="photo-preview-wrapper" style="display:none;" aria-live="polite">
+                    <img id="photo-preview" src="" alt="Photo preview"
+                         style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--m-red);">
+                    <button type="button"
+                            onclick="Members._photoPreview=null;document.getElementById('photo-upload-input').value='';document.getElementById('photo-preview-wrapper').style.display='none';"
+                            class="btn btn-secondary" style="font-size:0.8rem;padding:5px 14px;">
+                        🗑 Remove
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab: Documents -->
+            <div id="tab-docs" class="modal-tab-content" role="tabpanel">
+                <p style="font-size:0.8rem;color:rgba(44,16,0,0.5);margin-bottom:12px;">
+                    Upload birth certificates, marriage papers, or any other family documents.
+                    <strong>Save the member first</strong> before uploading documents.
+                    Max 5 MB per file.
+                </p>
+
+                <div id="documents-list" aria-live="polite"></div>
+
+                <button type="button" id="doc-upload-btn" class="btn-doc-upload">
+                    📤 Upload Document
+                </button>
+                <input type="file" id="doc-upload-input" style="display:none"
+                       aria-label="Upload document file">
+            </div>
+
+            <!-- Tab: Notes -->
+            <div id="tab-notes" class="modal-tab-content" role="tabpanel">
+                <div class="form-group">
+                    <label class="form-label" for="member-notes">Personal Notes</label>
+                    <textarea id="member-notes" name="notes" class="form-textarea"
+                              placeholder="Anecdotes, achievements, stories, memories…"
+                              rows="8" style="min-height:180px;"></textarea>
+                </div>
+            </div>
+        </form>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-member2"
+                    onclick="Members._closeModal('member-modal')">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btn-save-member">
+                💾 Save Member
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL: Delete Confirmation
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="delete-modal" class="modal-backdrop" role="alertdialog" aria-modal="true"
+     aria-labelledby="delete-modal-heading">
+    <div class="modal-box" style="max-width:400px;">
+        <div class="modal-header">
+            <h2 class="modal-title" id="delete-modal-heading">⚠️ Delete Member</h2>
+            <button class="modal-close" id="btn-cancel-delete" aria-label="Cancel">×</button>
+        </div>
+
+        <div class="modal-body delete-modal-body">
+            <div class="delete-icon" aria-hidden="true">🗑️</div>
+            <h3>Remove <span id="delete-member-name"></span>?</h3>
+            <p>This will permanently delete this member and <strong>all their recorded relationships</strong> from the family tree. This action cannot be undone.</p>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-delete2"
+                    onclick="Members._closeModal('delete-modal')">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+                🗑 Yes, Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL: Member Detail
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="detail-modal" class="modal-backdrop" role="dialog" aria-modal="true"
+     aria-labelledby="detail-name">
+    <div class="modal-box modal-lg">
+        <div class="modal-header">
+            <h2 class="modal-title">Member Profile</h2>
+            <button class="modal-close" id="btn-close-detail" aria-label="Close profile">×</button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Header with photo + name -->
+            <div class="detail-header">
+                <img id="detail-photo" src="" alt="Member photo"
+                     style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--m-red);flex-shrink:0;">
+                <div class="detail-info">
+                    <h2 id="detail-name" style="font-family:var(--font-head);font-size:1.2rem;color:var(--m-deep-red);margin-bottom:8px;"></h2>
+                    <div class="detail-meta">
+                        <span class="detail-badge" id="detail-gen"></span>
+                        <span class="detail-badge" id="detail-gender"></span>
+                        <span class="detail-badge" id="detail-alive"></span>
+                    </div>
+                    <div style="margin-top:8px;font-size:0.82rem;color:rgba(44,16,0,0.55);">
+                        🗓 Born: <strong id="detail-dob"></strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="detail-section-title">About</div>
+            <p class="detail-text" id="detail-desc"></p>
+
+            <!-- Notes -->
+            <div class="detail-section-title">Notes</div>
+            <p class="detail-text" id="detail-notes"></p>
+
+            <!-- Relations -->
+            <div class="detail-section-title">Relationships</div>
+            <div class="detail-relations" id="detail-relations"></div>
+
+            <!-- Documents -->
+            <div class="detail-section-title">Documents</div>
+            <div class="detail-docs" id="detail-docs"></div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="detail-edit-btn">✏️ Edit</button>
+            <button type="button" class="btn btn-danger"    id="detail-delete-btn">🗑 Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL: Relationship Finder
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="finder-modal" class="modal-backdrop" role="dialog" aria-modal="true"
+     aria-labelledby="finder-modal-title">
+    <div class="modal-box modal-lg">
+        <div class="modal-header">
+            <h2 class="modal-title" id="finder-modal-title">🔗 Relationship Finder</h2>
+            <button class="modal-close" id="btn-close-finder" aria-label="Close">×</button>
+        </div>
+
+        <div class="modal-body">
+            <p style="font-size:0.82rem;color:rgba(44,16,0,0.55);margin-bottom:16px;">
+                Select any two family members to discover how they are related and see the exact connection path.
+            </p>
+
+            <div class="finder-selectors">
+                <div class="form-group" style="margin:0;">
+                    <label class="form-label" for="finder-person-a">Person A</label>
+                    <select id="finder-person-a" class="form-select" aria-label="Select first person">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="finder-vs">↔️</div>
+                <div class="form-group" style="margin:0;">
+                    <label class="form-label" for="finder-person-b">Person B</label>
+                    <select id="finder-person-b" class="form-select" aria-label="Select second person">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-bottom:18px;">
+                <button type="button" class="btn btn-primary" id="btn-find-relation">
+                    🔍 Find Relationship
+                </button>
+            </div>
+
+            <div id="finder-result" aria-live="polite"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TOAST NOTIFICATION CONTAINER
+════════════════════════════════════════════════════════════════════════════ -->
+<div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SCRIPTS — CDN libraries first, then app modules
+════════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Dexie.js — IndexedDB wrapper for permanent browser storage -->
+<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"
+        crossorigin="anonymous"></script>
+
+<!-- D3.js v7 — Data-driven SVG tree visualization -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"
+        crossorigin="anonymous"></script>
+
+<!-- App modules (order matters: db → relations → members → search → tree → app) -->
+<script src="js/db.js"></script>
+<script src="js/relations.js"></script>
+<script src="js/members.js"></script>
+<script src="js/search.js"></script>
+<script src="js/tree.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

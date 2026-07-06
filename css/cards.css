@@ -1,0 +1,233 @@
+/* css/cards.css — Member card styles (rendered as SVG foreignObject HTML) */
+
+/* ── Member card base ───────────────────────────────────────────────────────*/
+.member-card {
+    width: 200px;
+    height: 230px;
+    background: var(--card-bg, #FFF0ED);
+    border: 3px solid var(--card-border, #C0392B);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 8px 8px;
+    position: relative;
+    font-family: 'Poppins', sans-serif;
+    cursor: default;
+    box-shadow: 0 3px 14px rgba(26,8,0,0.14);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: visible;
+    user-select: none;
+}
+
+.member-card:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 28px rgba(26,8,0,0.22);
+    z-index: 10;
+}
+
+/* Highlighted card */
+.card-highlighted {
+    outline: 3px solid #F0A500;
+    outline-offset: 3px;
+    animation: cardPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cardPulse {
+    0%, 100% { outline-color: #F0A500; box-shadow: 0 0 0 0 rgba(240,165,0,0.4); }
+    50%       { outline-color: #E65100; box-shadow: 0 0 0 8px rgba(240,165,0,0); }
+}
+
+/* ── Generation badge ───────────────────────────────────────────────────────*/
+.card-gen-badge {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: var(--card-badge, #C0392B);
+    color: #FDF5E6;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* ── Gender label (text below name) ────────────────────────────────────────*/
+.card-gender {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #6B3A2A;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+    opacity: 0.75;
+}
+
+/* ── Photo ring ─────────────────────────────────────────────────────────────*/
+.card-photo-ring {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 3px solid var(--card-border, #C0392B);
+    outline: 2px solid rgba(240,165,0,0.5);
+    outline-offset: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+    margin-bottom: 7px;
+    background: white;
+    position: relative;
+}
+
+.card-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.card-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #FDF5E6;
+}
+
+/* ── Name ───────────────────────────────────────────────────────────────────*/
+.card-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1A0800;
+    text-align: center;
+    line-height: 1.2;
+    margin-bottom: 3px;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── DOB ────────────────────────────────────────────────────────────────────*/
+.card-dob {
+    font-size: 0.68rem;
+    color: rgba(26,8,0,0.55);
+    margin-bottom: 2px;
+    text-align: center;
+}
+
+/* ── Age ────────────────────────────────────────────────────────────────────*/
+.card-age {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #2E7D32;          /* green for living */
+    margin-bottom: 3px;
+    text-align: center;
+    letter-spacing: 0.01em;
+}
+
+.card-age.card-deceased {
+    color: #8B0000;          /* dark red for deceased */
+}
+
+/* ── Description ────────────────────────────────────────────────────────────*/
+.card-desc {
+    font-size: 0.65rem;
+    color: rgba(26,8,0,0.45);
+    text-align: center;
+    line-height: 1.3;
+    max-width: 178px;
+    margin-bottom: 4px;
+}
+
+
+/* ── Actions row ────────────────────────────────────────────────────────────*/
+.card-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: auto;
+    justify-content: center;
+    flex-wrap: nowrap;
+}
+
+.card-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1.5px solid;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.15s ease;
+    background: white;
+    line-height: 1;
+}
+
+.btn-add {
+    border-color: var(--card-border, #C0392B);
+    color: var(--card-border, #C0392B);
+    font-size: 1rem;
+    font-weight: 700;
+}
+.btn-add:hover { background: var(--card-border, #C0392B); color: white; transform: scale(1.12); }
+
+.btn-view  { border-color: #1565C0; color: #1565C0; }
+.btn-view:hover  { background: #1565C0; color: white; }
+
+.btn-edit  { border-color: #E65100; color: #E65100; }
+.btn-edit:hover  { background: #E65100; color: white; }
+
+.btn-delete { border-color: #8B1010; color: #8B1010; }
+.btn-delete:hover { background: #8B1010; color: white; }
+
+/* ── Collapse / Expand button ───────────────────────────────────────────────*/
+.card-collapse-btn {
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--card-border, #C0392B);
+    background: white;
+    color: var(--card-border, #C0392B);
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+.card-collapse-btn:hover { background: var(--card-border, #C0392B); color: white; }
+.card-collapse-btn.collapsed { background: var(--card-border, #C0392B); color: white; }
+
+/* ── Mithila corner decorations ─────────────────────────────────────────────*/
+.card-corner {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: var(--card-border, #C0392B);
+    border-style: solid;
+    opacity: 0.6;
+}
+
+.card-corner.tl { top: 3px;    left: 3px;    border-width: 2px 0 0 2px; border-radius: 2px 0 0 0; }
+.card-corner.tr { top: 3px;    right: 3px;   border-width: 2px 2px 0 0; border-radius: 0 2px 0 0; }
+.card-corner.bl { bottom: 3px; left: 3px;    border-width: 0 0 2px 2px; border-radius: 0 0 0 2px; }
+.card-corner.br { bottom: 3px; right: 3px;   border-width: 0 2px 2px 0; border-radius: 0 0 2px 0; }
+
+/* ── SVG node highlight ring ────────────────────────────────────────────────*/
+.member-node.highlighted > foreignObject > div {
+    outline: 3px solid #F0A500 !important;
+}
