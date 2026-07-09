@@ -143,11 +143,18 @@ const Tree = {
 
         const genKeys = Object.keys(visByGen).map(Number).sort((a, b) => a - b);
 
+        // ── Pass 1: assign initial x positions by grouping spouses ──────────
+        // For a hub with 2 spouses: [wife1, hub, wife2]  (hub is centred)
+        // For a simple pair:        [person, spouse]
+        const groupedByGen = {}; // gen → array of groups, each group = [member, ...]
+
         genKeys.forEach(g => {
             const row     = this._sortRowByAge(visByGen[g] || [], graph.childOf, spouseOf);
             visByGen[g]   = row;
             const grouped = this._groupSpouses(row, spouseOf);
-            let xCursor   = 0;
+            groupedByGen[g] = grouped;
+
+            let xCursor = 0;
             grouped.forEach(group => {
                 group.forEach((m, idx) => {
                     positions[m.id] = { x: xCursor + idx * NODE_W, y: g * NODE_H };
@@ -156,25 +163,42 @@ const Tree = {
             });
         });
 
+        // ── Pass 2: slide each couple-group to centre above their children ───
+        // We iterate bottom-up (reverse gen order) so children are already placed.
         [...genKeys].reverse().forEach(g => {
-            const row = visByGen[g] || [];
-            row.forEach(m => {
-                const children = (parentOf[m.id] || []).filter(cid => positions[cid] && !hidden.has(cid));
-                if (!children.length) return;
-                const childXs  = children.map(cid => positions[cid].x);
-                const centerX  = (Math.min(...childXs) + Math.max(...childXs)) / 2;
-                const spouses  = (spouseOf[m.id] || []).filter(sid => positions[sid] && positions[sid].y === g * NODE_H);
-                const groupIds = [m.id, ...spouses];
-                const idealX   = centerX - ((groupIds.length - 1) * NODE_W) / 2;
-                if (Math.abs(idealX - positions[m.id].x) > 5) {
-                    groupIds.forEach((id, idx) => {
-                        if (positions[id]) positions[id].x = idealX + idx * NODE_W;
+            const grouped = groupedByGen[g] || [];
+
+            grouped.forEach(group => {
+                // Collect all children of every member in this group
+                const allChildIds = [];
+                group.forEach(m => {
+                    (parentOf[m.id] || []).forEach(cid => {
+                        if (positions[cid] && !hidden.has(cid) && !allChildIds.includes(cid))
+                            allChildIds.push(cid);
+                    });
+                });
+                if (!allChildIds.length) return;
+
+                const childXs = allChildIds.map(cid => positions[cid].x);
+                const centerX = (Math.min(...childXs) + Math.max(...childXs)) / 2;
+
+                // Ideal left edge of the group so the group's centre aligns with children
+                const idealGroupLeft = centerX - ((group.length - 1) * NODE_W) / 2;
+                const currentLeft    = positions[group[0].id].x;
+
+                if (Math.abs(idealGroupLeft - currentLeft) > 5) {
+                    group.forEach((m, idx) => {
+                        if (positions[m.id]) positions[m.id].x = idealGroupLeft + idx * NODE_W;
                     });
                 }
             });
+
+            // Fix any overlaps between groups on this row
+            const row = visByGen[g] || [];
             this._fixOverlaps(row, positions, NODE_W, hidden);
         });
 
+        // ── Pass 3: shift everything so min-x ≥ 20 ──────────────────────────
         const allX = Object.values(positions).map(p => p.x);
         if (allX.length > 0) {
             const minX = Math.min(...allX);
@@ -190,32 +214,49 @@ const Tree = {
     _sortRowByAge(row, childOf, spouseOf) {
         if (!row || row.length <= 1) return row;
 
-        // Returns a numeric sort key: smallest (oldest DOB) = leftmost
+        // Returns a numeric sort key: smallest (oldest DOB) = leftmost (eldest first)
         const dobTime = (m) => {
             if (!m.dob) return Infinity;
             const t = new Date(m.dob).getTime();
             return Number.isNaN(t) ? Infinity : t;
         };
 
+        // Identify "hub" members: those who have 2+ spouses in this row.
+        // They will be handled by _groupSpouses (centre placement), not sorted here.
+        const spouseCountInRow = {};
+        row.forEach(m => {
+            spouseCountInRow[m.id] = (spouseOf[m.id] || [])
+                .filter(sid => row.some(r => r.id === sid)).length;
+        });
+        const hubIds = new Set(
+            row.filter(m => spouseCountInRow[m.id] >= 2).map(m => m.id)
+        );
+
         // Build spouse-units: a "unit" is one person + their spouse (if in same row)
+        // Skip people who are spouses OF a hub (they'll be placed by groupSpouses)
         const processed = new Set();
         const units     = [];
 
         row.forEach(m => {
             if (processed.has(m.id)) return;
+
             const unit = [m];
             processed.add(m.id);
-            // Attach spouse(s) in same row into the same unit
-            (spouseOf[m.id] || []).forEach(sid => {
-                const spouse = row.find(r => r.id === sid);
-                if (spouse && !processed.has(sid)) {
-                    unit.push(spouse);
-                    processed.add(sid);
-                }
-            });
-            // Sort key for the unit = oldest member in the unit
+
+            // Only bundle a single spouse here; multi-spouse hubs are handled separately
+            if (!hubIds.has(m.id)) {
+                (spouseOf[m.id] || []).forEach(sid => {
+                    const spouse = row.find(r => r.id === sid);
+                    if (spouse && !processed.has(sid) && !hubIds.has(sid)) {
+                        unit.push(spouse);
+                        processed.add(sid);
+                    }
+                });
+            }
+
+            // Sort key = oldest member in the unit
             unit.sortKey = Math.min(...unit.map(dobTime));
-            // Parent-key: canonical sorted list of parent IDs, groups siblings together
+            // Parent-key: canonical sorted parent IDs → groups biological siblings together
             const parents = childOf[m.id] || [];
             unit.parentKey = parents.length
                 ? parents.slice().sort((a, b) => a - b).join(',')
@@ -230,10 +271,10 @@ const Tree = {
             byParents.get(unit.parentKey).push(unit);
         });
 
-        // Within each sibling group: sort by age (eldest = smallest DOB = first)
+        // Within each sibling group: sort oldest-first (smallest DOB = leftmost)
         byParents.forEach(group => group.sort((a, b) => a.sortKey - b.sortKey));
 
-        // Sort sibling groups themselves by the age of the eldest child in each group
+        // Sort sibling groups by the age of their eldest member
         const sortedGroups = [...byParents.values()]
             .sort((ga, gb) => ga[0].sortKey - gb[0].sortKey);
 
@@ -241,21 +282,60 @@ const Tree = {
     },
 
     _groupSpouses(row, spouseOf) {
+        // Build spouse groups.
+        // For a person with 2+ spouses: put the person in the CENTRE flanked by spouses.
+        //   [Wife1]  [Husband]  [Wife2]
+        // For a person with 1 spouse: keep them together as a pair.
+        //   [Wife]  [Husband]
         const processed = new Set();
         const groups    = [];
-        row.forEach(m => {
-            if (processed.has(m.id)) return;
-            const group = [m];
-            processed.add(m.id);
-            (spouseOf[m.id] || []).forEach(sid => {
-                const spouse = row.find(r => r.id === sid);
-                if (spouse && !processed.has(sid)) {
-                    group.push(spouse);
-                    processed.add(sid);
-                }
-            });
-            groups.push(group);
+
+        // ── Step 1: identify "hub" members (2+ spouses in the same row) ────
+        // Process hubs first so their wives don't form incorrect pairs before
+        // the hub is encountered.
+        const hubsFirst = [...row].sort((a, b) => {
+            const aCount = (spouseOf[a.id] || []).filter(sid => row.some(r => r.id === sid)).length;
+            const bCount = (spouseOf[b.id] || []).filter(sid => row.some(r => r.id === sid)).length;
+            return bCount - aCount; // descending: hubs first
         });
+
+        hubsFirst.forEach(m => {
+            if (processed.has(m.id)) return;
+
+            // Find all unprocessed spouses of m that are in the same row
+            const rowSpouses = (spouseOf[m.id] || [])
+                .map(sid => row.find(r => r.id === sid))
+                .filter(Boolean)
+                .filter(s => !processed.has(s.id));
+
+            if (rowSpouses.length === 0) {
+                processed.add(m.id);
+                groups.push([m]);
+                return;
+            }
+
+            if (rowSpouses.length === 1) {
+                // Simple pair
+                const sp = rowSpouses[0];
+                processed.add(m.id);
+                processed.add(sp.id);
+                groups.push([m, sp]);
+                return;
+            }
+
+            // Multiple spouses → hub in centre: [wife1, hub, wife2, ...]
+            rowSpouses.forEach(s => processed.add(s.id));
+            processed.add(m.id);
+            const [leftSpouse, ...rightSpouses] = rowSpouses;
+            groups.push([leftSpouse, m, ...rightSpouses]);
+        });
+
+        // ── Step 2: preserve the original row order within the groups list ──
+        // Re-sort groups so they appear in the order their first member
+        // appears in the original row.
+        const rowIndex = new Map(row.map((m, i) => [m.id, i]));
+        groups.sort((ga, gb) => (rowIndex.get(ga[0].id) ?? 0) - (rowIndex.get(gb[0].id) ?? 0));
+
         return groups;
     },
 

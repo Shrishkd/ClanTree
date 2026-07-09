@@ -3,17 +3,111 @@
 const Members = {
 
     // ── State ────────────────────────────────────────────────────────────────
-    _pendingRelation: null,  // { sourceId, relationType }
+    _pendingRelation: null,  // { sourceId, relationType, coParentId? }
     _editingId:       null,
     _photoPreview:    null,  // base64 string
 
     // ── Open Add Modal ───────────────────────────────────────────────────────
-    openAddModal(sourceId, relationType) {
-        this._pendingRelation = sourceId != null ? { sourceId, relationType } : null;
-        this._editingId       = null;
-        this._photoPreview    = null;
+    async openAddModal(sourceId, relationType) {
+        // For son/daughter: if the source person has multiple spouses,
+        // we must ask which spouse is the co-parent before opening the form.
+        if (sourceId != null && (relationType === 'son' || relationType === 'daughter')) {
+            const srcRels  = await DB.getRelationsForMember(sourceId);
+            const spouseIds = srcRels
+                .filter(r => r.type === 'spouse')
+                .map(r => r.fromId === sourceId ? r.toId : r.fromId);
 
-        // Set modal title
+            if (spouseIds.length > 1) {
+                // Multiple spouses — ask user to pick the co-parent
+                await this._pickCoParent(sourceId, relationType, spouseIds);
+                return;
+            }
+        }
+
+        this._openAddModalDirect(sourceId, relationType, null);
+    },
+
+    // ── Co-Parent Picker ─────────────────────────────────────────────────────
+    // Shows a small modal asking "Which spouse is the other parent?"
+    async _pickCoParent(sourceId, relationType, spouseIds) {
+        // Fetch spouse names
+        const spouses = await Promise.all(spouseIds.map(id => DB.getMember(id)));
+        const sourceMember = await DB.getMember(sourceId);
+
+        // Build and show the picker modal
+        let modal = document.getElementById('coparent-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id        = 'coparent-modal';
+            modal.className = 'modal-backdrop';
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.innerHTML = `
+                <div class="modal-box" style="max-width:420px;">
+                    <div class="modal-header">
+                        <h2 class="modal-title" id="coparent-modal-title">Select Other Parent</h2>
+                        <button class="modal-close" id="btn-close-coparent" aria-label="Close">×</button>
+                    </div>
+                    <div class="modal-body" id="coparent-modal-body"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-coparent">Cancel</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+
+            modal.querySelector('#btn-close-coparent').addEventListener('click',  () => this._closeCoParentModal());
+            modal.querySelector('#btn-cancel-coparent').addEventListener('click', () => this._closeCoParentModal());
+            modal.addEventListener('click', (e) => { if (e.target === modal) this._closeCoParentModal(); });
+        }
+
+        const childLabel = relationType === 'son' ? 'son' : 'daughter';
+        const body = modal.querySelector('#coparent-modal-body');
+        body.innerHTML = `
+            <p style="font-size:0.85rem;color:rgba(44,16,0,0.6);margin-bottom:16px;">
+                <strong>${sourceMember?.name || 'This person'}</strong> has multiple spouses.
+                Who is the mother/other parent of this ${childLabel}?
+            </p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                ${spouses.filter(Boolean).map(sp => `
+                    <button class="btn btn-secondary coparent-choice"
+                            data-spouse-id="${sp.id}"
+                            style="text-align:left;padding:10px 14px;font-size:0.88rem;">
+                        <strong>${sp.name}</strong>
+                        ${sp.dob ? `<span style="color:rgba(44,16,0,0.5);font-size:0.78rem;margin-left:8px;">DOB: ${formatDate(sp.dob)}</span>` : ''}
+                    </button>`).join('')}
+                <button class="btn btn-secondary coparent-choice"
+                        data-spouse-id="none"
+                        style="text-align:left;padding:10px 14px;font-size:0.88rem;border-style:dashed;">
+                    <em style="color:rgba(44,16,0,0.45);">Unknown / not in tree</em>
+                </button>
+            </div>`;
+
+        modal.querySelectorAll('.coparent-choice').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const spouseId = btn.dataset.spouseId;
+                const coParentId = spouseId === 'none' ? null : parseInt(spouseId);
+                this._closeCoParentModal();
+                this._openAddModalDirect(sourceId, relationType, coParentId);
+            });
+        });
+
+        modal.classList.add('open');
+        document.body.classList.add('modal-open');
+    },
+
+    _closeCoParentModal() {
+        const modal = document.getElementById('coparent-modal');
+        if (modal) { modal.classList.remove('open'); document.body.classList.remove('modal-open'); }
+    },
+
+    // ── Internal: open the member add form (after co-parent has been resolved) ──
+    _openAddModalDirect(sourceId, relationType, coParentId) {
+        this._pendingRelation = sourceId != null
+            ? { sourceId, relationType, coParentId }
+            : null;
+        this._editingId    = null;
+        this._photoPreview = null;
+
         const titles = {
             'father':        'Add Father',
             'mother':        'Add Mother',
@@ -25,11 +119,9 @@ const Members = {
             'adopted-child': 'Add Adopted Child',
         };
         const title = sourceId != null ? (titles[relationType] || 'Add Member') : 'Add Root Member';
-
         document.getElementById('member-modal-title').textContent = title;
         this._resetForm();
 
-        // Pre-fill gender based on relation
         const genderMap = {
             father:  'male',
             mother:  'female',
@@ -40,7 +132,8 @@ const Members = {
             spouse:  '',
         };
         if (genderMap[relationType]) {
-            document.querySelector(`input[name="gender"][value="${genderMap[relationType]}"]`).checked = true;
+            const radio = document.querySelector(`input[name="gender"][value="${genderMap[relationType]}"]`);
+            if (radio) radio.checked = true;
         }
 
         this._openModal('member-modal');
@@ -150,6 +243,9 @@ const Members = {
 
     // ── Create Relation ──────────────────────────────────────────────────────
     async _createRelation(sourceId, newId, relationType) {
+        // coParentId is set when the user explicitly chose a co-parent
+        const coParentId = this._pendingRelation?.coParentId ?? undefined;
+
         switch (relationType) {
             case 'father':
             case 'mother':
@@ -162,36 +258,19 @@ const Members = {
                 // sourceId is parent, newId is child
                 await DB.addRelation(sourceId, newId, 'parent-child');
 
-                const srcRels   = await DB.getRelationsForMember(sourceId);
-                const spouseIds = srcRels
+                const srcRels    = await DB.getRelationsForMember(sourceId);
+                const spouseIds  = srcRels
                     .filter(r => r.type === 'spouse')
                     .map(r => r.fromId === sourceId ? r.toId : r.fromId);
 
-                if (spouseIds.length === 1) {
-                    // Sole spouse — auto-link as co-parent (both lines to child)
+                if (coParentId !== undefined && coParentId !== null) {
+                    // User explicitly picked a co-parent
+                    await DB.addRelation(coParentId, newId, 'parent-child');
+                } else if (spouseIds.length === 1) {
+                    // Only one spouse — auto-link as co-parent
                     await DB.addRelation(spouseIds[0], newId, 'parent-child');
-                } else if (spouseIds.length > 1) {
-                    // Multiple spouses — link the spouse closest in age / same side
-                    // as the child when DOB is known; otherwise skip (ambiguous marriage)
-                    const childMember = await DB.getMember(newId);
-                    const spouses     = (await Promise.all(
-                        spouseIds.map(id => DB.getMember(id))
-                    )).filter(Boolean);
-
-                    if (childMember?.dob && spouses.length > 0) {
-                        const childDob = new Date(childMember.dob).getTime();
-                        let bestSpouse = spouses[0];
-                        let bestGap    = Infinity;
-                        spouses.forEach(sp => {
-                            if (!sp.dob) return;
-                            const gap = Math.abs(new Date(sp.dob).getTime() - childDob);
-                            if (gap < bestGap) { bestGap = gap; bestSpouse = sp; }
-                        });
-                        if (bestSpouse) {
-                            await DB.addRelation(bestSpouse.id, newId, 'parent-child');
-                        }
-                    }
                 }
+                // If spouseIds.length > 1 and coParentId is null → unknown/not in tree, don't link any spouse
                 break;
             }
 
@@ -437,6 +516,7 @@ const Members = {
 
     closeAll() {
         ['member-modal', 'delete-modal', 'detail-modal', 'finder-modal'].forEach(id => this._closeModal(id));
+        this._closeCoParentModal();
     }
 };
 
